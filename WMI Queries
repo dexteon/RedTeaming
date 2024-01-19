@@ -1,0 +1,48 @@
+# can we run WMI with our permissions?
+Get-WmiObject -Credential $cred -ComputerName Control-DC1 -Namespace "root" -class "__Namespace" | Select Name
+
+# Get basic system info like boot state, user, memory, system type
+gwmi Win32_ComputerSystem | select BootupState,UserName,TotalPhysicalMemory,SystemType,SystemFamily,Domain,DNSHostName,OEMStringArray | ft -AutoSize
+
+# Get detailed OS information
+gwmi Win32_OperatingSystem | fl *
+
+# Get antivirus product details
+gwmi -Namespace root\SecurityCenter2 -Class AntiVirusProduct | select PSComputerName,DisplayName,PathToSignedProductExe,PathToSignedReportingExe,ProductState,Timestamp | ft -AutoSize
+
+# List running services excluding Windows default path
+gwmi Win32_Service | select Name,State,StartName,PathName | ? {$_.State -like "Running"} | findstr /vi "C:\Windows" | ft -AutoSize
+
+# Get logged on user details
+gwmi Win32_LoggedOnUser | select Antecedent,Dependent,PSComputerName | ft -AutoSize
+
+# Get logon session information
+gwmi Win32_LogonSession | select AuthenticationPackage,LogonID,StartTime,Scope | ft -AutoSize
+
+# Get quick fix engineering (updates and hotfixes) details
+gwmi Win32_QuickFixEngineering | select PSComputerName,Description,HotFixID,InstalledBy,InstalledOn | ft -AutoSize
+
+# List shared resources
+gwmi Win32_Share | select Type,Name,AllowMaximum,Description,Scope | ft -AutoSize
+
+# Get IPv4 routing table details
+gwmi Win32_IP4RouteTable | select PSComputerName,Caption,Mask,Metric1,Protocol | ft -AutoSize
+
+# List user accounts
+gwmi Win32_UserAccount | ft -AutoSize
+
+# List groups
+gwmi Win32_Group | ft -AutoSize
+
+# View users and SID
+Get-CimInstance -Class Win32_UserAccount | Format-Table -Property Caption,Domain,SID,FullName,Name
+
+# Check network adapters
+Get-CimInstance -Classname Win32_NetworkAdapterConfiguration
+
+# CHeck adapters remotely
+Get-CimInstance -Classname Win32_NetworkAdapterConfiguration -ComputerName Control-DC1
+
+#Remote Reboot via CIM method
+Invoke-CimMethod -ClassName Win32_OperatingSystem -ComputerName Control-DC1 -MethodName Reboot
+
